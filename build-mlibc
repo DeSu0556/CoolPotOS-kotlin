@@ -42,8 +42,8 @@ endian = 'little'
 EOF
 unset ARCH
 
-git -C "$MLIBC_DIR" apply "$MLIBC_PATCH" 2>/dev/null || \
-git -C "$MLIBC_DIR" apply -R --check "$MLIBC_PATCH" >/dev/null
+#git -C "$MLIBC_DIR" apply "$MLIBC_PATCH" 2>/dev/null || \
+#git -C "$MLIBC_DIR" apply -R --check "$MLIBC_PATCH" >/dev/null
 
 meson setup "$MLIBC_DIR" \
     --cross-file cross_file.txt \

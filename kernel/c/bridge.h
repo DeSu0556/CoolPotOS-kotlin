@@ -15,6 +15,10 @@ extern volatile struct limine_mp_request mp_request;
 extern volatile struct limine_rsdp_request rsdp_request;
 extern volatile struct limine_executable_file_request executable_file_request;
 
+extern void gdt_setup();
+extern uint64_t read_cr3(void);
+extern void invlpg(uint64_t address);
+
 #ifdef __cplusplus
 }
 #endif

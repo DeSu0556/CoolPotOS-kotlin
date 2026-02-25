@@ -10,10 +10,11 @@ LINKER ?= ld.lld
 XORRISO ?= xorriso
 QEMU ?= qemu-system-x86_64
 
-KOTLIN_SRC := kernel/kotlin/kernel.kt
+KOTLIN_SRC := $(shell find kernel/kotlin -type f -name '*.kt' | sort)
 LIMINE_DEF := kernel/c/limine.def
 BOOT_SRC := kernel/c/boot.c
 SHIM_SRC := kernel/c/shim.c
+NATIVE_SRC := kernel/c/gdt.c
 LINKER_SCRIPT := assets/linker.ld
 KONAN_TOOLROOT ?= $(HOME)/.konan/dependencies/x86_64-unknown-linux-gnu-gcc-8.3.0-glibc-2.19-kernel-4.9-2
 KONAN_GCC_LIBDIR := $(KONAN_TOOLROOT)/lib/gcc/x86_64-unknown-linux-gnu/8.3.0
@@ -33,7 +34,8 @@ KOTLIN_LIB := $(BUILD_DIR)/libkernel.a
 LIMINE_KLIB := $(BUILD_DIR)/limine.klib
 BOOT_OBJ := $(BUILD_DIR)/boot.o
 SHIM_OBJ := $(BUILD_DIR)/shim.o
-C_OBJS := $(BOOT_OBJ) $(SHIM_OBJ)
+NATIVE_OBJ := $(BUILD_DIR)/description_table.o
+C_OBJS := $(BOOT_OBJ) $(SHIM_OBJ) $(NATIVE_OBJ)
 KERNEL_ELF := $(BUILD_DIR)/kernel.elf
 ISO_IMAGE := $(BUILD_DIR)/$(PROJECT_NAME).iso
 KONAN_RUNTIME_LIBS := $(MLIBC_RUNTIME_LIBS) $(LIBSTDCXX_A) $(LIBGCC_A) $(LIBGCC_EH_A)
@@ -54,8 +56,8 @@ LDFLAGS += --gc-sections
 LDFLAGS += -T $(LINKER_SCRIPT)
 
 XORRISOFLAGS = -as mkisofs --efi-boot limine/limine-uefi-cd.bin -efi-boot-part --efi-boot-image
-QEMUFLAGS = -m 256m -M q35 -cpu qemu64,+x2apic -no-reboot
-QEMUFLAGS += -drive if=pflash,format=raw,readonly=on,file=assets/ovmf-code.fd
+QEMUFLAGS = -m 2G -M q35 -cpu qemu64,+x2apic
+QEMUFLAGS += -drive if=pflash,format=raw,readonly=on,file=assets/ovmf-code.fd -serial stdio
 
 MLIBC_CC := $(CROSS_CC) -target x86_64-unknown-none
 MLIBC_CXX := $(CROSS_CXX) -target x86_64-unknown-none
@@ -86,6 +88,9 @@ $(BOOT_OBJ): $(BOOT_SRC) kernel/c/limine.h | $(BUILD_DIR)
 	$(CROSS_CC) $(CFLAGS) -c $< -o $@
 
 $(SHIM_OBJ): $(SHIM_SRC) | $(BUILD_DIR)
+	$(CROSS_CC) $(CFLAGS) -c $< -o $@
+
+$(NATIVE_OBJ): $(NATIVE_SRC) | $(BUILD_DIR)
 	$(CROSS_CC) $(CFLAGS) -c $< -o $@
 
 $(KERNEL_ELF): $(C_OBJS) $(KOTLIN_LIB) $(LINKER_SCRIPT) $(KONAN_RUNTIME_LIBS)

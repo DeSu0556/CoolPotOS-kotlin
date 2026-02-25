@@ -1,3 +1,3 @@
 headers = bridge.h
-package = limine
+package = natives
 compilerOpts = -Ikernel/c
